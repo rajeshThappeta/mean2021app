@@ -12,8 +12,15 @@
    border-bottom: 3px solid rgb(55, 196, 55);
 }
 
-.active{
+ .active{
     font-size: large;
    
-}
+}  
 
+nav .navbar-nav li a{
+   
+   color: rgb(0, 225, 255) !important;
+    }
+
+   
+   

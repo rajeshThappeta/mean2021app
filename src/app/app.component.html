@@ -1,6 +1,8 @@
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">MyAPP</a>
+    <a class="navbar-brand" href="#">
+      <img src="https://sdtimes.com/wp-content/uploads/2018/04/angular.png"  width="60px" alt="">
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
       aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -13,9 +15,17 @@
         <li class="nav-item">
           <a class="nav-link" routerLink="register" routerLinkActive="active" routerLinkActive="active" data-bs-toggle="collapse" data-bs-target=".navbar-collapse.show">Register</a>
         </li>
-        <li class="nav-item">
+
+
+        <li class="nav-item" *ngIf="!us.userLoginStatus">
           <a class="nav-link" routerLink="login" routerLinkActive="active" data-bs-toggle="collapse" data-bs-target=".navbar-collapse.show">Login</a>
         </li>
+
+        <li class="nav-item"  *ngIf="us.userLoginStatus">
+          <a class="nav-link" routerLink="login" routerLinkActive="active" data-bs-toggle="collapse" data-bs-target=".navbar-collapse.show"  (click)=userLogout()>Logout</a>
+        </li>
+
+       
 
       </ul>
     </div>
