@@ -5,7 +5,11 @@ const expressErrorHandler = require("express-async-handler")
 const bcryptjs = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 
-const checkToken=require("./middlewares/verifyToken")
+const checkToken = require("./middlewares/verifyToken")
+
+const multerObj=require("./middlewares/multerCloudinary")
+
+
 
 
 
@@ -14,34 +18,6 @@ userApi.use(exp.json())
 
 
 
-//import MongoCLient
-const mc = require("mongodb").MongoClient;
-
-
-
-//connection string
-const databaseUrl = "mongodb+srv://vnr2021:vnr2021@cluster0.rjvoz.mongodb.net/vnrdb2021?retryWrites=true&w=majority"
-
-//const databaseUrl="mongodb://<username>:<password>@cluster0-shard-00-00.rjvoz.mongodb.net:27017,cluster0-shard-00-01.rjvoz.mongodb.net:27017,cluster0-shard-00-02.rjvoz.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority"
-
-let userCollectionObj;
-
-//connect to DB
-mc.connect(databaseUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-
-    if (err) {
-        console.log("err in db connection", err);
-    }
-    else {
-        //get database object
-        let databaseObj = client.db("vnrdb2021")
-        //create usercollection object
-
-        userCollectionObj = databaseObj.collection("usercollection")
-        console.log("connected to database")
-
-    }
-})
 
 
 
@@ -49,6 +25,8 @@ mc.connect(databaseUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (er
 //http://localhost:3000/user/getusers
 //get users
 userApi.get("/getusers", expressErrorHandler(async (req, res) => {
+
+    let userCollectionObj = req.app.get("userCollectionObj")
 
     let userList = await userCollectionObj.find().toArray()
     res.send({ message: userList })
@@ -61,6 +39,9 @@ userApi.get("/getusers", expressErrorHandler(async (req, res) => {
 
 //get user by username
 userApi.get("/getuser/:username", expressErrorHandler(async (req, res, next) => {
+
+
+    let userCollectionObj = req.app.get("userCollectionObj")
 
     //get username from url
     let un = req.params.username;
@@ -95,9 +76,13 @@ userApi.get("/getuser/:username", expressErrorHandler(async (req, res, next) => 
 
 //http://localhost:3000/user/createuser
 //create user
-userApi.post("/createuser", expressErrorHandler(async (req, res, next) => {
+userApi.post("/createuser", multerObj.single('photo'), expressErrorHandler(async (req, res, next) => {
+
+    let userCollectionObj = req.app.get("userCollectionObj")
+
     //get user obj
-    let newUser = req.body;
+    let newUser = JSON.parse(req.body.userObj)
+
     //search for existing user
     let user = await userCollectionObj.findOne({ username: newUser.username })
     //if user existed
@@ -109,6 +94,9 @@ userApi.post("/createuser", expressErrorHandler(async (req, res, next) => {
         let hashedPassword = await bcryptjs.hash(newUser.password, 7)
         //replace password
         newUser.password = hashedPassword;
+        //add image url
+        newUser.profileImage=req.file.path;
+        delete newUser.photo;
         //insert
         await userCollectionObj.insertOne(newUser)
         res.send({ message: "User created" })
@@ -121,6 +109,7 @@ userApi.post("/createuser", expressErrorHandler(async (req, res, next) => {
 //http://localhost:3000/user/updateuser/<username>
 
 userApi.put("/updateuser/:username", expressErrorHandler(async (req, res, next) => {
+    let userCollectionObj = req.app.get("userCollectionObj")
 
     //get modified user
     let modifiedUser = req.body;
@@ -136,6 +125,7 @@ userApi.put("/updateuser/:username", expressErrorHandler(async (req, res, next) 
 
 //delete user
 userApi.delete("/deleteuser/:username", expressErrorHandler(async (req, res) => {
+    let userCollectionObj = req.app.get("userCollectionObj")
 
     //get username from url
     let un = req.params.username;
@@ -156,6 +146,7 @@ userApi.delete("/deleteuser/:username", expressErrorHandler(async (req, res) => 
 
 //user login
 userApi.post('/login', expressErrorHandler(async (req, res) => {
+    let userCollectionObj = req.app.get("userCollectionObj")
 
     //get user credetials
     let credentials = req.body;
@@ -187,8 +178,8 @@ userApi.post('/login', expressErrorHandler(async (req, res) => {
 
 
 //dummy route to create protected resource
-userApi.get("/testing",checkToken,(req,res)=>{
-    res.send({message:"This is protected data"})
+userApi.get("/testing", checkToken, (req, res) => {
+    res.send({ message: "This is protected data" })
 })
 
 
